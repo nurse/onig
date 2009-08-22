@@ -40,7 +40,7 @@ end
 def parse_unicode_data(file)
   last_cp = 0
   data = {'Cn' => []}
-  File.open(file).lines.each do |line|
+  IO.foreach(file) do |line|
     fields = line.split(';')
     cp = fields[0].to_i(16)
 
@@ -154,7 +154,8 @@ end
 def parse_scripts(file)
   last_script = nil
   data = []
-  File.open(file).lines.reject{|l| l.match(/^[# ]/)}.each do |line|
+  IO.foreach(file) do |line|
+    next if /^[# ]/ =~ line
     fields = line.split(';')
     next unless fields.size > 1
     script = fields[1][/^ (\w+)/, 1]
@@ -177,10 +178,9 @@ def make_const(prop, pairs, name)
   puts "static const OnigCodePoint CR_#{prop}[] = {"
   # The first element of the constant is the number of pairs of codepoints
   puts "\t#{pairs.size},"
-  pairs.map do |pair|
-    pair.map { |c|  c == 0 ? '0x0000' : sprintf("%0#6x", c) }
-  end.each do |cp|
-    puts "\t#{cp.first}, #{cp.last},"
+  pairs.each do |pair|
+    pair.map! { |c|  c == 0 ? '0x0000' : sprintf("%0#6x", c) }
+    puts "\t#{pair.first}, #{pair.last},"
   end
   puts "}; /* CR_#{prop} */"
 end
