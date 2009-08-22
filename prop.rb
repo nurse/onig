@@ -84,11 +84,8 @@ def parse_unicode_data(file)
   # blank    Space_Separator | 0009
   data['Blank'] = data['Zs'] + [0x0009]
 
-  # TODO: Double check this definition. It appears to encompass the entire C
-  # category, but currently the CR blocks for C and Cntrl are markedly different
-  # cntrl    Control | Format | Unassigned | Private_Use | Surrogate
-  data['Cntrl'] = data['Cc'] + data['Cf'] + data['Cn'] + data['Co'] +
-                  data['Cs']
+  # cntrl    Control
+  data['Cntrl'] = data['Cc']
 
   # digit    Decimal_Number
   data['Digit'] = data['Nd']
