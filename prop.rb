@@ -79,7 +79,7 @@ def parse_unicode_data(file)
   data['Alpha'] = data['L'] + data['M']
 
   # ascii    0000 - 007F
-  data['Ascii'] = (0..0x007F).to_a
+  data['ASCII'] = (0..0x007F).to_a
 
   # blank    Space_Separator | 0009
   data['Blank'] = data['Zs'] + [0x0009]
@@ -115,7 +115,7 @@ def parse_unicode_data(file)
 
   # xdigit   0030 - 0039 | 0041 - 0046 | 0061 - 0066
   #          (0-9, a-f, A-F)
-  data['Xdigit'] = (0x0030..0x0039).to_a + (0x0041..0x0046).to_a +
+  data['XDigit'] = (0x0030..0x0039).to_a + (0x0041..0x0046).to_a +
                    (0x0061..0x0066).to_a + ('0'.ord..'9'.ord).to_a +
                    ('a'.ord..'f'.ord).to_a + ('A'.ord..'F'.ord).to_a
 
