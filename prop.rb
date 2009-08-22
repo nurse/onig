@@ -16,12 +16,12 @@ def pair_codepoints(codepoints)
   # ranges such that the start- and endpoints form an inclusive set of
   # codepoints with property _property_. Note: It is intended that some ranges
   # will begin with the value with  which they end, e.g. 0x0020 -> 0x0020
-  
+
   codepoints = codepoints.uniq.sort
   last_cp = codepoints.first
   pairs = [[last_cp, nil]]
   codepoints[1..-1].each do |codepoint|
-    
+
     # If the current codepoint does not follow directly on from the last
     # codepoint, the last codepoint represents the end of the current range,
     # and the current codepoint represents the start of the next range.
@@ -56,7 +56,7 @@ def parse_unicode_data(file)
 
     # The third field denotes the 'General' category, e.g. Lu
     (data[fields[2]] ||= []) << cp
-    
+
     # The 'Major' category is the first letter of the 'General' category, e.g.
     # 'Lu' -> 'L'
     (data[fields[2][0,1]] ||= []) << cp
@@ -87,7 +87,7 @@ def parse_unicode_data(file)
   # TODO: Double check this definition. It appears to encompass the entire C
   # category, but currently the CR blocks for C and Cntrl are markedly different
   # cntrl    Control | Format | Unassigned | Private_Use | Surrogate
-  data['Cntrl'] = data['Cc'] + data['Cf'] + data['Cn'] + data['Co'] + 
+  data['Cntrl'] = data['Cc'] + data['Cf'] + data['Cn'] + data['Co'] +
                   data['Cs']
 
   # digit    Decimal_Number
@@ -102,12 +102,12 @@ def parse_unicode_data(file)
   # NOTE: This definition encompasses the entire P category, and the current
   # mappings agree, but we explcitly declare this way to marry it with the above
   # definition.
-  data['Punct'] = data['Pc'] + data['Pd'] + data['Pe'] + data['Pf'] + 
+  data['Punct'] = data['Pc'] + data['Pd'] + data['Pe'] + data['Pf'] +
                   data['Pi'] + data['Po'] + data['Ps']
 
   # space    Space_Separator | Line_Separator | Paragraph_Separator |
   #               0009 | 000A | 000B | 000C | 000D | 0085
-  data['Space'] = data['Zs'] + data['Zl'] + data['Zp'] + 
+  data['Space'] = data['Zs'] + data['Zl'] + data['Zp'] +
                   [0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x0085]
 
   # upper    Uppercase_Letter
@@ -115,8 +115,8 @@ def parse_unicode_data(file)
 
   # xdigit   0030 - 0039 | 0041 - 0046 | 0061 - 0066
   #          (0-9, a-f, A-F)
-  data['Xdigit'] = (0x0030..0x0039).to_a + (0x0041..0x0046).to_a + 
-                   (0x0061..0x0066).to_a + ('0'.ord..'9'.ord).to_a + 
+  data['Xdigit'] = (0x0030..0x0039).to_a + (0x0041..0x0046).to_a +
+                   (0x0061..0x0066).to_a + ('0'.ord..'9'.ord).to_a +
                    ('a'.ord..'f'.ord).to_a + ('A'.ord..'F'.ord).to_a
 
   # word     Letter | Mark | Decimal_Number | Connector_Punctuation
@@ -146,7 +146,7 @@ def parse_unicode_data(file)
              else        "[[:#{prop}:]]"
            end
     name = '-' if (prop == 'Any' || prop == 'Assigned')
-    make_const(prop, pair_codepoints(codepoints), name) 
+    make_const(prop, pair_codepoints(codepoints), name)
   end
 end
 
@@ -177,7 +177,7 @@ def make_const(prop, pairs, name)
   puts "static const OnigCodePoint CR_#{prop}[] = {"
   # The first element of the constant is the number of pairs of codepoints
   puts "\t#{pairs.size},"
-  pairs.map do |pair| 
+  pairs.map do |pair|
     pair.map { |c|  c == 0 ? '0x0000' : sprintf("%0#6x", c) }
   end.each do |cp|
     puts "\t#{cp.first}, #{cp.last},"
