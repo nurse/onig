@@ -148,21 +148,16 @@ end
 
 
 def parse_scripts(file)
-  last_script = nil
+  script = nil
   data = []
   IO.foreach(file) do |line|
-    next if /^[# ]/ =~ line
-    fields = line.split(';')
-    next unless fields.size > 1
-    script = fields[1][/^ (\w+)/, 1]
-    cp = fields.first.strip.split('..').map{|s| s.to_i(16)}
-    cp = cp.size == 1 ? cp : (cp.first..cp.last).to_a
-    if last_script != script
-      make_const(last_script, pair_codepoints(data), 'Script') if last_script
+    if /^# Total code points: / =~ line
+      make_const(script, pair_codepoints(data), 'Script')
       data = []
-      last_script = script
+    elsif /^(\h+)(?:..(\h+))?\s*;\s*(\w+)/ =~ line
+      script = $3
+      $2 ? data.concat(($1.to_i(16)..$2.to_i(16)).to_a) : data.push($1.to_i(16))
     end
-    data += cp
   end
 end
 
