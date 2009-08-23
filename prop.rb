@@ -8,7 +8,7 @@ unless ARGV.size == 2
   exit(1)
 end
 
-
+POSIX_NAMES = %w[NEWLINE Alpha Blank Cntrl Digit Graph Lower Print Punct Space Upper XDigit Word Alnum ASCII]
 
 def pair_codepoints(codepoints)
 
@@ -62,6 +62,10 @@ def parse_unicode_data(file)
     (data[fields[2][0,1]] ||= []) << cp
     last_cp = cp
   end
+
+  # General Category property
+  gcps = %w[Any Assigned]
+  gcps.concat data.keys.sort
 
   # The last Cn codepoint should be 0x10ffff. If it's not, append the missing
   # codepoints to Cn and C
@@ -135,30 +139,26 @@ def parse_unicode_data(file)
   # Unicode range minus the unassigned characters
   data['Assigned'] = data['Any'] - data['Cn']
 
-  data.sort.each do |prop, codepoints|
-    name = case prop.size
-             when 1 then 'Major Category'
-             when 2 then 'General Category'
-             else        "[[:#{prop}:]]"
-           end
-    name = '-' if (prop == 'Any' || prop == 'Assigned')
-    make_const(prop, pair_codepoints(codepoints), name)
-  end
+  # Returns General Category Property names and the data
+  [gcps, data]
 end
 
 
 def parse_scripts(file)
   script = nil
   data = []
+  names = []
   IO.foreach(file) do |line|
     if /^# Total code points: / =~ line
       make_const(script, pair_codepoints(data), 'Script')
+      names << script
       data = []
     elsif /^(\h+)(?:..(\h+))?\s*;\s*(\w+)/ =~ line
       script = $3
       $2 ? data.concat(($1.to_i(16)..$2.to_i(16)).to_a) : data.push($1.to_i(16))
     end
   end
+  names
 end
 
 # make_const(property, pairs, name): Prints a 'static const' structure for a
@@ -176,5 +176,19 @@ def make_const(prop, pairs, name)
   puts "}; /* CR_#{prop} */"
 end
 
-parse_unicode_data(ARGV[0])
-parse_scripts(ARGV[1])
+gcps, data = parse_unicode_data(ARGV[0])
+POSIX_NAMES.each do |name|
+  make_const(name, pair_codepoints(data[name]), "[[:#{name}:]]")
+end
+print "\n#ifdef USE_UNICODE_PROPERTIES"
+gcps.each do |name|
+  category =
+    case name.size
+    when 1 then 'Major Category'
+    when 2 then 'General Category'
+    else        '-'
+    end
+  make_const(name, pair_codepoints(data[name]), category)
+end
+scripts = parse_scripts(ARGV[1])
+puts "#endif /* USE_UNICODE_PROPERTIES */"
