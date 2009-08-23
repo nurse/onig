@@ -176,6 +176,7 @@ def make_const(prop, pairs, name)
   puts "}; /* CR_#{prop} */"
 end
 
+puts '%{'
 gcps, data = parse_unicode_data(ARGV[0])
 POSIX_NAMES.each do |name|
   make_const(name, pair_codepoints(data[name]), "[[:#{name}:]]")
@@ -192,3 +193,38 @@ gcps.each do |name|
 end
 scripts = parse_scripts(ARGV[1])
 puts "#endif /* USE_UNICODE_PROPERTIES */"
+
+puts "\n\nstatic const OnigCodePoint* const CodeRanges[] = {"
+POSIX_NAMES.each{|name|puts"  CR_#{name},"}
+puts "#ifdef USE_UNICODE_PROPERTIES"
+gcps.each{|name|puts"  CR_#{name},"}
+scripts.each{|name|puts"  CR_#{name},"}
+puts "#endif /* USE_UNICODE_PROPERTIES */"
+puts "};"
+
+puts(<<'__HEREDOC')
+struct uniname2ctype_struct {
+  int name, ctype;
+};
+
+static const struct uniname2ctype_struct *uniname2ctype_p(const char *, unsigned int);
+%}
+struct uniname2ctype_struct;
+%%
+__HEREDOC
+i = -1
+POSIX_NAMES.each  {|name|puts"%-21s %3d"%[name+',', i+=1]}
+puts "#ifdef USE_UNICODE_PROPERTIES"
+gcps.each{|name|puts"%-21s %3d"%[name+',', i+=1]}
+scripts.each{|name|puts"%-21s %3d"%[name+',', i+=1]}
+puts "#endif /* USE_UNICODE_PROPERTIES */\n"
+puts(<<'__HEREDOC')
+%%
+static int
+uniname2ctype(const UChar *name, unsigned int len)
+{
+  const struct uniname2ctype_struct *p = uniname2ctype_p((const char *)name, len);
+  if (p) return p->ctype;
+  return -1;
+}
+__HEREDOC
